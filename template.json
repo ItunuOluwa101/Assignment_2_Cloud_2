@@ -1,0 +1,134 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "ObateruVMName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "ObateruVMAdminUserName": {
+            "type": "string",
+            "minLength": 1
+        },
+        "ObateruVMAdminPassword": {
+            "type": "securestring"
+        },
+        "ObateruVMUbuntuOSVersion": {
+            "type": "string",
+            "defaultValue": "14.04.2-LTS",
+            "allowedValues": [
+                "12.04.5-LTS",
+                "14.04.2-LTS",
+                "15.04"
+            ]
+        },
+        "itunu555@outlook.comType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_ZRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ]
+        }
+    },
+    "resources": [
+        {
+            "name": "[variables('ObateruVMNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', '{MICROSOFT_NETWORK_VIRTUALNETWORKS}')]"
+            ],
+            "tags": {
+                "displayName": "ObateruVMNic"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('ObateruVMSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('ObateruVMName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('itunu555@outlook.comName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('ObateruVMNicName'))]"
+            ],
+            "tags": {
+                "displayName": "ObateruVM"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('ObateruVMVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('ObateruVMName')]",
+                    "adminUsername": "[parameters('ObateruVMAdminUsername')]",
+                    "adminPassword": "[parameters('ObateruVMAdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('ObateruVMImagePublisher')]",
+                        "offer": "[variables('ObateruVMImageOffer')]",
+                        "sku": "[parameters('ObateruVMUbuntuOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "ObateruVMOSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('itunu555@outlook.comName'), '.blob.core.windows.net/', variables('ObateruVMStorageAccountContainerName'), '/', variables('ObateruVMOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ObateruVMNicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[variables('itunu555@outlook.comName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-06-15",
+            "dependsOn": [],
+            "tags": {
+                "displayName": "itunu555@outlook.com"
+            },
+            "properties": {
+                "accountType": "[parameters('itunu555@outlook.comType')]"
+            }
+        }
+    ],
+    "variables": {
+        "ObateruVMImagePublisher": "Canonical",
+        "ObateruVMImageOffer": "UbuntuServer",
+        "ObateruVMOSDiskName": "ObateruVMOSDisk",
+        "ObateruVMVmSize": "Standard_D1",
+        "ObateruVMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', '{MICROSOFT_NETWORK_VIRTUALNETWORKS}')]",
+        "ObateruVMSubnetRef": "[concat(variables('ObateruVMVnetID'), '/subnets/', variables('{MICROSOFT_NETWORK_VIRTUALNETWORKS}Subnet1Name'))]",
+        "ObateruVMStorageAccountContainerName": "vhds",
+        "ObateruVMNicName": "[concat(parameters('ObateruVMName'), 'NetworkInterface')]",
+        "itunu555@outlook.comName": "[concat('itunu555@outlook.com', uniqueString(resourceGroup().id))]"
+    }
+}
